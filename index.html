@@ -61,19 +61,21 @@
     
     /* تعديل ساحة الطاولة لتصبح القطع نائمة وملتصقة تماماً */
     #board-area {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 0px; /* الالتصاق التام للحجر بالحجر */
-        min-height: 120px;
-        background: rgba(0,0,0,0.4);
-        border-radius: 10px;
-        padding: 15px;
-        overflow-x: auto;
-        white-space: nowrap;
-        margin: 15px 0;
-        border: 1px dashed #22c55e;
-    }
+    display: flex;
+    justify-content: flex-start; /* تبدأ الأحجار من اليمين لترتيب أسهل */
+    align-items: center;
+    gap: 0px; /* الت those أحجار ملتصقة تماماً */
+    min-height: 120px;
+    background: rgba(0,0,0,0.4);
+    border-radius: 10px;
+    padding: 15px;
+    overflow-x: auto; /* هذا يسمح للاعب بالسحب بإصبعه لرؤية باقي الأحجار */
+    white-space: nowrap; /* يمنع الأحجار من النزول لسطر جديد بشكل مشوه */
+    margin: 15px 0;
+    border: 1px dashed #22c55e;
+    -webkit-overflow-scrolling: touch; /* يجعل السحب ناعماً وسلساً على الهواتف */
+}
+
 
     /* تصميم حجر الدومينو الأفقي (النائم وملتصق) للطاولة */
     .domino-piece-horizontal {
