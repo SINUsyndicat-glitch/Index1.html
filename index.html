@@ -363,32 +363,55 @@ function renderGame() {
 
 
 // معالجة حركة اللاعب عند النقر على الحجر
-function handlePlayerMove(index) {
+function handlePlayerMove(index) function handlePlayerMove(index) {
     if (!isPlayerTurn) return;
 
     let piece = playerHand[index];
-    let success = playPieceOnBoard(piece, true, index);
+    let leftEdge = gameBoard.length > 0 ? gameBoard[0][0] : null;
+    let rightEdge = gameBoard.length > 0 ? gameBoard[gameBoard.length - 1][1] : null;
+    
+    let matchesLeft = (gameBoard.length === 0) || (piece[0] === leftEdge || piece[1] === leftEdge);
+    let matchesRight = (gameBoard.length === 0) || (piece[0] === rightEdge || piece[1] === rightEdge);
+    
+    let chosenEdge = null;
+
+    // إذا كان الحجر يطابق الجهتين معاً (يمين ويسار الطاولة)
+    if (gameBoard.length > 0 && matchesLeft && matchesRight) {
+        // نطلب من اللاعب محمد الاختيار
+        let choice = prompt("هذا الحجر يطابق الطرفين! \nاكتب (1) للعب على اليمين، أو اكتب (2) للعب على اليسار:");
+        if (choice === "1") {
+            chosenEdge = "right";
+        } else if (choice === "2") {
+            chosenEdge = "left";
+        } else {
+            alert("إدخال غير صحيح، تم إلغاء الحركة.");
+            return; // إلغاء اللعبة حتى يختار بشكل صحيح
+        }
+    }
+
+    // تنفيذ اللعب بناءً على خيار اللاعب أو المطابقة التلقائية إذا كانت لجهة واحدة
+    let success = playPieceWithChoice(piece, chosenEdge);
 
     if (success) {
         playerHand.splice(index, 1);
         renderGame();
 
         if (playerHand.length === 0) {
-            handleDominoVictory(); // انتهاء أحجار محمد = الفوز الكاسح
+            handleDominoVictory();
             return;
         }
 
         if (isGameLocked()) {
-            handleGameLock(); // فحص هل أغلقت اللعبة؟
+            handleGameLock();
         } else {
             isPlayerTurn = false;
-            setTimeout(computerTurn, 1200); // تمرير الدور للكمبيوتر بعد ثانية
+            setTimeout(computerTurn, 1200);
         }
     }
 }
 
-// دالة فحص مطابقة الحجر مع أطراف الطاولة (يمين أو يسار)
-function playPieceOnBoard(piece, isPlayer, index) {
+// دالة مساعدة جديدة لتنفيذ وضع الحجر بناء على اختيار الجهة المفضل
+function playPieceWithChoice(piece, chosenEdge) {
     if (gameBoard.length === 0) {
         gameBoard.push(piece);
         return true;
@@ -399,26 +422,29 @@ function playPieceOnBoard(piece, isPlayer, index) {
     let num1 = piece[0];
     let num2 = piece[1];
 
-    // مطابقة مع الطرف الأيسر
-    if (num1 === leftEdge) {
-        gameBoard.unshift([num2, num1]);
+    // إذا اختار اللاعب اليسار أو كان المطابقة يسار فقط
+    if (chosenEdge === "left" || (chosenEdge === null && (num1 === leftEdge || num2 === leftEdge))) {
+        if (num1 === leftEdge) {
+            gameBoard.unshift([num2, num1]);
+        } else {
+            gameBoard.unshift([num1, num2]);
+        }
         return true;
-    } else if (num2 === leftEdge) {
-        gameBoard.unshift([num1, num2]);
-        return true;
-    }
-    // مطابقة مع الطرف الأيمن
-    else if (num1 === rightEdge) {
-        gameBoard.push([num1, num2]);
-        return true;
-    } else if (num2 === rightEdge) {
-        gameBoard.push([num2, num1]);
+    } 
+    // إذا اختار اللاعب اليمين أو كان المطابقة يمين فقط
+    else if (chosenEdge === "right" || (chosenEdge === null && (num1 === rightEdge || num2 === rightEdge))) {
+        if (num1 === rightEdge) {
+            gameBoard.push([num1, num2]);
+        } else {
+            gameBoard.push([num2, num1]);
+        }
         return true;
     }
 
-    if (isPlayer) alert("هذا الحجر لا يطابق أي طرف على الطاولة! اسحب من السوق.");
+    alert("هذا الحجر لا يطابق أي طرف!");
     return false;
 }
+
 
 // دالة السحب من السوق (الـ 14 حجر) للاعب
 function playerDraw() {
