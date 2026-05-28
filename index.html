@@ -383,25 +383,39 @@ function playPieceOnBoard(piece, isPlayer, index) {
 function playerDraw() {
     if (!isPlayerTurn) return;
 
-    if (boneyard.length > 0) {
-        let drawnPiece = boneyard.pop();
-        playerHand.push(drawnPiece);
-        renderGame();
+    // فحص أولاً: هل يملك اللاعب فعلاً حجر يمكن لعبه؟ (لمنع السحب العشوائي إذا كان يملك حلاً)
+    let hasMove = playerHand.some(piece => canPlayPiece(piece));
+    if (hasMove) {
+        alert("أنت تملك حجرًا قانونيًا في يدك بالفعل! لا يمكنك السحب من السوق.");
+        return;
+    }
 
-        // إذا كان الحجر المسحوب يطابق الطاولة، يلعبه اللاعب فوراً
+    // حلقة سحب مستمرة طالما أن السوق يحتوي على أحجار ولم يجد حجرًا مطابقًا بعد
+    let foundPiece = false;
+    let drawnCount = 0;
+
+    while (boneyard.length > 0 && !foundPiece) {
+        let drawnPiece = boneyard.pop(); // سحب حجر من الـ 14 حجر
+        playerHand.push(drawnPiece);
+        drawnCount++;
+
+        // فحص هل الحجر المسحوب الجديد يطابق الطاولة؟
         if (canPlayPiece(drawnPiece)) {
-            alert(`سحبت حجر [${drawnPiece[0]}/${drawnPiece[1]}] وهو مطابِق! يمكنك لعبه الآن.`);
-        } else {
-            alert(`سحبت حجر [${drawnPiece[0]}/${drawnPiece[1]}] وغير مطابِق. يمر الدور للخصم.`);
-            isPlayerTurn = false;
-            setTimeout(computerTurn, 1200);
+            foundPiece = true;
+            alert(`قمت بسحب ${drawnCount} أحجار من السوق حتى وجدت الحجر المناسب: [${drawnPiece[0]}/${drawnPiece[1]}]! يمكنك لعبه الآن.`);
         }
-    } else {
-        alert("السوق فارغ تماماً! يمر الدور تلقائياً للكمبيوتر.");
+    }
+
+    // إذا انتهى السوق تماماً ولم يجد الحجر المطابق، يأخذ كل الأحجار ويمر الدور
+    if (!foundPiece && boneyard.length === 0) {
+        alert(`حظاً عاثراً! لقد سحبت جميع الأحجار المتبقية في السوق (${drawnCount} أحجار) ولم تجد حلاً. ينتقل الدور للكمبيوتر.`);
         isPlayerTurn = false;
         setTimeout(computerTurn, 1200);
     }
+
+    renderGame(); // تحديث الشاشة فوراً لإظهار الأحجار الجديدة في يد محمد والعداد
 }
+
 
 function canPlayPiece(piece) {
     if (gameBoard.length === 0) return true;
@@ -422,12 +436,13 @@ function computerTurn() {
     let leftEdge = gameBoard[0][0];
     let rightEdge = gameBoard[gameBoard.length - 1][1];
 
-    // بحث الكمبيوتر عن حجر مطابق في يده
+    // 1. البحث عن حجر مطابق في يد الكمبيوتر الحالية
     let playableIndex = computerHand.findIndex(piece => 
         piece[0] === leftEdge || piece[1] === leftEdge || piece[0] === rightEdge || piece[1] === rightEdge
     );
 
     if (playableIndex !== -1) {
+        // إذا وجد حجرًا، يلعب بشكل طبيعي
         let piece = computerHand[playableIndex];
         playPieceOnBoard(piece, false, playableIndex);
         computerHand.splice(playableIndex, 1);
@@ -439,24 +454,47 @@ function computerTurn() {
             return;
         }
 
-        if (isGameLocked()) {
-            handleGameLock();
-        } else {
-            isPlayerTurn = true;
-        }
+        if (isGameLocked()) handleGameLock();
+        else isPlayerTurn = true;
+
     } else {
-        // إذا لم يجد، يسحب تلقائياً من الـ 14 حجر في السوق
-        if (boneyard.length > 0) {
-            console.log("الكمبيوتر يسحب من السوق...");
-            computerHand.push(boneyard.pop());
-            renderGame();
-            setTimeout(computerTurn, 800); // يعيد التفكير بعد السحب تلقائياً
+        // 2. إذا لم يجد حجرًا، يبدأ الكمبيوتر بالسحب المستمر تلقائياً حتى يجد حلاً
+        console.log("الكمبيوتر لا يملك حركة، يبدأ السحب المستمر من السوق...");
+        let computerFound = false;
+
+        while (boneyard.length > 0 && !computerFound) {
+            let drawnPiece = boneyard.pop();
+            computerHand.push(drawnPiece);
+
+            if (canPlayPiece(drawnPiece)) {
+                computerFound = true;
+                // لعب الحجر المسحوب فوراً
+                playPieceOnBoard(drawnPiece, false, computerHand.length - 1);
+                computerHand.splice(computerHand.length - 1, 1);
+                console.log(`الكمبيوتر سحب وجد حلاً ولعب الحجر: [${drawnPiece[0]}/${drawnPiece[1]}]`);
+            }
+        }
+
+        renderGame();
+
+        if (computerFound) {
+            if (computerHand.length === 0) {
+                alert("🚨 للأسف! الكمبيوتر أنهى أحجاره أولاً.");
+                document.getElementById("domino-table").style.display = "none";
+            } else if (isGameLocked()) {
+                handleGameLock();
+            } else {
+                isPlayerTurn = true; // يعود الدور لمحمد
+            }
         } else {
-            alert("الكمبيوتر لا يملك حركة والسوق فارغ! الدور لك الآن يا محمد.");
+            // السوق انتهى والكمبيوتر سحب كل شيء ولم يجد حلاً
+            alert("الكمبيوتر سحب كل الأحجار المتبقية في السوق ولم يجد حلاً! الدور لك الآن يا محمد.");
             isPlayerTurn = true;
         }
     }
 }
+
+    
 
 // ===================================================
 // 4. منطق القفيل (الغلق) وحساب مجموع النقاط الأكثر
