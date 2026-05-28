@@ -493,8 +493,8 @@ function canPlayPiece(piece) {
     return (piece[0] === leftEdge || piece[1] === leftEdge || piece[0] === rightEdge || piece[1] === rightEdge);
 }
 
-// ===================================================
-// 3. ذكاء الخصم (Computer AI) والسحب التلقائي له
+//===================================================
+// النسخة المصلحة والمحدثة لدالة الكمبيوتر لإنهاء التعليق
 // ===================================================
 function computerTurn() {
     if (isGameLocked()) {
@@ -505,15 +505,16 @@ function computerTurn() {
     let leftEdge = gameBoard[0][0];
     let rightEdge = gameBoard[gameBoard.length - 1][1];
 
-    // 1. البحث عن حجر مطابق في يد الكمبيوتر الحالية
+    // بحث الكمبيوتر عن حجر مطابق في يده
     let playableIndex = computerHand.findIndex(piece => 
         piece[0] === leftEdge || piece[1] === leftEdge || piece[0] === rightEdge || piece[1] === rightEdge
     );
 
     if (playableIndex !== -1) {
-        // إذا وجد حجرًا، يلعب بشكل طبيعي
         let piece = computerHand[playableIndex];
-        playPieceOnBoard(piece, false, playableIndex);
+        
+        // هنا تم التحديث: الكمبيوتر يلعب تلقائياً على الجهة المناسبة له دون إظهار نافذة خيارات
+        playPieceWithChoice(piece, null); 
         computerHand.splice(playableIndex, 1);
         renderGame();
 
@@ -527,8 +528,8 @@ function computerTurn() {
         else isPlayerTurn = true;
 
     } else {
-        // 2. إذا لم يجد حجرًا، يبدأ الكمبيوتر بالسحب المستمر تلقائياً حتى يجد حلاً
-        console.log("الكمبيوتر لا يملك حركة، يبدأ السحب المستمر من السوق...");
+        // إذا لم يجد، يسحب مستمراً من السوق
+        console.log("الكمبيوتر لا يملك حركة، يبدأ السحب المستمر...");
         let computerFound = false;
 
         while (boneyard.length > 0 && !computerFound) {
@@ -537,10 +538,8 @@ function computerTurn() {
 
             if (canPlayPiece(drawnPiece)) {
                 computerFound = true;
-                // لعب الحجر المسحوب فوراً
-                playPieceOnBoard(drawnPiece, false, computerHand.length - 1);
+                playPieceWithChoice(drawnPiece, null);
                 computerHand.splice(computerHand.length - 1, 1);
-                console.log(`الكمبيوتر سحب وجد حلاً ولعب الحجر: [${drawnPiece[0]}/${drawnPiece[1]}]`);
             }
         }
 
@@ -553,10 +552,9 @@ function computerTurn() {
             } else if (isGameLocked()) {
                 handleGameLock();
             } else {
-                isPlayerTurn = true; // يعود الدور لمحمد
+                isPlayerTurn = true;
             }
         } else {
-            // السوق انتهى والكمبيوتر سحب كل شيء ولم يجد حلاً
             alert("الكمبيوتر سحب كل الأحجار المتبقية في السوق ولم يجد حلاً! الدور لك الآن يا محمد.");
             isPlayerTurn = true;
         }
