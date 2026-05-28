@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سنديكات سينو - لعبة الدومينو اللامركزية</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+
+    <style>
+        body {
+            background-color: #0b0f19;
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-align: center;
+            padding: 10px;
+            margin: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .header-box {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #334155;
+        }
+        .btn {
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn-success { background-color: #16a34a; }
+        .btn-warning { background-color: #ca8a04; }
+        
+        /* طاولة الدومينو الكلاسيكية */
+        #domino-table {
+            background-color: #14532d;
+            border: 8px solid #1e293b;
+            min-height: 400px;
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.6);
+            display: none; /* تظهر فقط بعد ربط المحفظة ودفع الرسوم */
+        }
+        .area-title {
+            font-size: 14px;
+            color: #cbd5e1;
+            margin: 5px 0;
+            background: rgba(0,0,0,0.3);
+            padding: 4px;
+            border-radius: 4px;
+        }
+        
+        /* ساحة عرض القطع على الطاولة متتالية */
+        #board-area {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+            min-height: 120px;
+            background: rgba(0,0,0,0.4);
+            border-radius: 10px;
+            padding: 10px;
+            overflow-x: auto;
+            white-space: nowrap;
+            margin: 15px 0;
+            border: 1px dashed #22c55e;
+        }
+
+        /* تصميم قطعة الدومينو بالـ CSS */
+        .domino-piece {
+            display: inline-flex;
+            flex-direction: column;
+            width: 40px;
+            height: 80px;
+            background-color: #f8fafc;
+            color: #0f172a;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 18px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            cursor: pointer;
+            border: 1px solid #cbd5e1;
+            overflow: hidden;
+        }
+        .domino-half {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .domino-line {
+            height: 2px;
+            background-color: #94a3b8;
+            width: 100%;
+        }
+        .hidden-piece {
+            background-color: #334155;
+            border: 2px solid #64748b;
+            color: #334155;
+        }
+        .hand-container {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            min-height: 90px;
+            padding: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header-box">
+        <h2>🎰 دومينو سينو مافيا ($SINU)</h2>
+        <p>العب بذكائك ضد الكمبيوتر، اقفل الطاولة، واربح 500 $SINU حقيقية!</p>
+        
+        <button id="connectBtn" class="btn" onclick="connectWallet()">ربط المحفظة 🔗</button>
+        <button id="startBtn" class="btn btn-success" onclick="startDominoGame()" style="display: none;">دخول الطاولة بـ 100 $SINU 🃏</button>
+        <button id="drawBtn" class="btn btn-warning" onclick="playerDraw()" style="display: none;">سحب حجر من السوق 🎰</button>
+    </div>
+
+    <div id="domino-table">
+        <div id="computer-area">
+            <div class="area-title">🕵️‍♂️ الخصم (الكمبيوتر) - المتبقي: <span id="comp-count">0</span> أحجار</div>
+            <div id="computer-pieces" class="hand-container"></div>
+        </div>
+
+        <div><small style="color: #4ade80;">ساحة الطاولة (الأطراف)</small></div>
+        <div id="board-area">
+            <div style="color: #a7f3d0; font-size: 14px;">في انتظار تنزيل الحجر الأول...</div>
+        </div>
+
+        <div id="player-area">
+            <div class="area-title">🃏 أحجارك الخاصة (اضغط على الحجر المناسب للعب)</div>
+            <div id="player-pieces" class="hand-container"></div>
+        </div>
+        
+        <div style="margin-top: 10px;">
+            <small style="color: #fca5a5;">الأحجار المتبقية في السوق: <span id="boneyard-count">14</span></small>
+        </div>
+    </div>
+</div>
+
+<script>
+// ===================================================
+// 1. إعدادات الـ Web3 والربط بالعقد الذكي والـ ABI
+// ===================================================
+let provider;
+let signer;
+let gameContract;
+let userAddress = null;
+
+// ضع هنا عنوان عقد اللعبة الخاص بك على شبكة Base
+const contractAddress = "0xYourGameContractAddressHere..."; 
+
+// الـ ABI لتحديد الدوال التي سيستدعيها الكود من العقد الذكي
+const contractABI = [
+    "function enterTable() public payable",  
+    "function claimDominoPrize() public"
+];
+
+async function connectWallet() {
+    if (window.ethereum) {
+        try {
+            const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+            userAddress = accounts[0];
+            
+            provider = new ethers.BrowserProvider(window.ethereum);
+            signer = await provider.getSigner();
+            gameContract = new ethers.Contract(contractAddress, contractABI, signer);
+            
+            alert("تم ربط المحفظة بنجاح يا محمد!");
+            document.getElementById("connectBtn").innerText = "تم الربط ✅";
+            document.getElementById("startBtn").style.display = "inline-block";
+        } catch (error) {
+            console.error(error);
+            alert("فشل الاتصال بالمحفظة.");
+        }
+    } else {
+        alert("الرجاء فتح الموقع من داخل متصفح محفظتك (MetaMask / Coinbase) على الهاتف!");
+    }
+}
+
+// ===================================================
+// 2. منطق لعبة الدومينو الكلاسيكية وهندسة الأحجار
+// ===================================================
+const dominoDeck = [];
+// توليد الـ 28 حجر الفريدة (من 0-0 إلى 6-6)
+for (let i = 0; i <= 6; i++) {
+    for (let j = i; j <= 6; j++) {
+        dominoDeck.push([i, j]);
+    }
+}
+
+let playerHand = [];    
+let computerHand = [];  
+let boneyard = [];       
+let gameBoard = [];     
+let isPlayerTurn = true; // تحديد من عليه الدور
+
+// دالة بدء الجولة ودفع الرسوم الذكية
+async function startDominoGame() {
+    // تفعيل دفع الرسوم قبل بدء اللعب الحقيقي
+    /* try {
+        const tx = await gameContract.enterTable();
+        await tx.wait();
+    } catch(e) {
+        alert("يجب إتمام المعاملة لدخول الطاولة!");
+        return;
+    }
+    */
+
+    // خلط الأحجار عشوائياً وتوزيعها
+    let shuffledDeck = [...dominoDeck].sort(() => 0.5 - Math.random());
+    
+    playerHand = shuffledDeck.splice(0, 7);
+    computerHand = shuffledDeck.splice(0, 7);
+    boneyard = shuffledDeck; // الـ 14 حجر المتبقية في السوق
+    gameBoard = [];
+    isPlayerTurn = true;
+
+    // إظهار واجهة الطاولة وأزرار اللعب
+    document.getElementById("domino-table").style.display = "block";
+    document.getElementById("drawBtn").style.display = "inline-block";
+    
+    renderGame();
+}
+
+// دالة العرض الرسومي وتحديث الشاشة (Render)
+function renderGame() {
+    // 1. عرض قطع الطاولة (المنتصف)
+    const boardArea = document.getElementById("board-area");
+    boardArea.innerHTML = "";
+    if (gameBoard.length === 0) {
+        boardArea.innerHTML = `<div style="color: #a7f3d0; font-size: 14px;">ابدأ الجولة بنقر أي حجر من أحجارك!</div>`;
+    } else {
+        gameBoard.forEach(piece => {
+            boardArea.innerHTML += `
+                <div class="domino-piece" style="cursor: default;">
+                    <div class="domino-half">${piece[0]}</div>
+                    <div class="domino-line"></div>
+                    <div class="domino-half">${piece[1]}</div>
+                </div>`;
+        });
+    }
+
+    // 2. عرض قطع اللاعب محمد
+    const playerArea = document.getElementById("player-pieces");
+    playerArea.innerHTML = "";
+    playerHand.forEach((piece, index) => {
+        playerArea.innerHTML += `
+            <div class="domino-piece" onclick="handlePlayerMove(${index})">
+                <div class="domino-half">${piece[0]}</div>
+                <div class="domino-line"></div>
+                <div class="domino-half">${piece[1]}</div>
+            </div>`;
+    });
+
+    // 3. عرض قطع الكمبيوتر (مخفية لعدم الغش)
+    const computerArea = document.getElementById("computer-pieces");
+    computerArea.innerHTML = "";
+    computerHand.forEach(() => {
+        computerArea.innerHTML += `
+            <div class="domino-piece hidden-piece">
+                <div class="domino-half">?</div>
+                <div class="domino-line"></div>
+                <div class="domino-half">?</div>
+            </div>`;
+    });
+
+    // تحديث العدادات الرقمية
+    document.getElementById("comp-count").innerText = computerHand.length;
+    document.getElementById("boneyard-count").innerText = boneyard.length;
+}
+
+// معالجة حركة اللاعب عند النقر على الحجر
+function handlePlayerMove(index) {
+    if (!isPlayerTurn) return;
+
+    let piece = playerHand[index];
+    let success = playPieceOnBoard(piece, true, index);
+
+    if (success) {
+        playerHand.splice(index, 1);
+        renderGame();
+
+        if (playerHand.length === 0) {
+            handleDominoVictory(); // انتهاء أحجار محمد = الفوز الكاسح
+            return;
+        }
+
+        if (isGameLocked()) {
+            handleGameLock(); // فحص هل أغلقت اللعبة؟
+        } else {
+            isPlayerTurn = false;
+            setTimeout(computerTurn, 1200); // تمرير الدور للكمبيوتر بعد ثانية
+        }
+    }
+}
+
+// دالة فحص مطابقة الحجر مع أطراف الطاولة (يمين أو يسار)
+function playPieceOnBoard(piece, isPlayer, index) {
+    if (gameBoard.length === 0) {
+        gameBoard.push(piece);
+        return true;
+    }
+
+    let leftEdge = gameBoard[0][0];
+    let rightEdge = gameBoard[gameBoard.length - 1][1];
+    let num1 = piece[0];
+    let num2 = piece[1];
+
+    // مطابقة مع الطرف الأيسر
+    if (num1 === leftEdge) {
+        gameBoard.unshift([num2, num1]);
+        return true;
+    } else if (num2 === leftEdge) {
+        gameBoard.unshift([num1, num2]);
+        return true;
+    }
+    // مطابقة مع الطرف الأيمن
+    else if (num1 === rightEdge) {
+        gameBoard.push([num1, num2]);
+        return true;
+    } else if (num2 === rightEdge) {
+        gameBoard.push([num2, num1]);
+        return true;
+    }
+
+    if (isPlayer) alert("هذا الحجر لا يطابق أي طرف على الطاولة! اسحب من السوق.");
+    return false;
+}
+
+// دالة السحب من السوق (الـ 14 حجر) للاعب
+function playerDraw() {
+    if (!isPlayerTurn) return;
+
+    if (boneyard.length > 0) {
+        let drawnPiece = boneyard.pop();
+        playerHand.push(drawnPiece);
+        renderGame();
+
+        // إذا كان الحجر المسحوب يطابق الطاولة، يلعبه اللاعب فوراً
+        if (canPlayPiece(drawnPiece)) {
+            alert(`سحبت حجر [${drawnPiece[0]}/${drawnPiece[1]}] وهو مطابِق! يمكنك لعبه الآن.`);
+        } else {
+            alert(`سحبت حجر [${drawnPiece[0]}/${drawnPiece[1]}] وغير مطابِق. يمر الدور للخصم.`);
+            isPlayerTurn = false;
+            setTimeout(computerTurn, 1200);
+        }
+    } else {
+        alert("السوق فارغ تماماً! يمر الدور تلقائياً للكمبيوتر.");
+        isPlayerTurn = false;
+        setTimeout(computerTurn, 1200);
+    }
+}
+
+function canPlayPiece(piece) {
+    if (gameBoard.length === 0) return true;
+    let leftEdge = gameBoard[0][0];
+    let rightEdge = gameBoard[gameBoard.length - 1][1];
+    return (piece[0] === leftEdge || piece[1] === leftEdge || piece[0] === rightEdge || piece[1] === rightEdge);
+}
+
+// ===================================================
+// 3. ذكاء الخصم (Computer AI) والسحب التلقائي له
+// ===================================================
+function computerTurn() {
+    if (isGameLocked()) {
+        handleGameLock();
+        return;
+    }
+
+    let leftEdge = gameBoard[0][0];
+    let rightEdge = gameBoard[gameBoard.length - 1][1];
+
+    // بحث الكمبيوتر عن حجر مطابق في يده
+    let playableIndex = computerHand.findIndex(piece => 
+        piece[0] === leftEdge || piece[1] === leftEdge || piece[0] === rightEdge || piece[1] === rightEdge
+    );
+
+    if (playableIndex !== -1) {
+        let piece = computerHand[playableIndex];
+        playPieceOnBoard(piece, false, playableIndex);
+        computerHand.splice(playableIndex, 1);
+        renderGame();
+
+        if (computerHand.length === 0) {
+            alert("🚨 للأسف! الكمبيوتر أنهى أحجاره أولاً. خسرت الجولة.");
+            document.getElementById("domino-table").style.display = "none";
+            return;
+        }
+
+        if (isGameLocked()) {
+            handleGameLock();
+        } else {
+            isPlayerTurn = true;
+        }
+    } else {
+        // إذا لم يجد، يسحب تلقائياً من الـ 14 حجر في السوق
+        if (boneyard.length > 0) {
+            console.log("الكمبيوتر يسحب من السوق...");
+            computerHand.push(boneyard.pop());
+            renderGame();
+            setTimeout(computerTurn, 800); // يعيد التفكير بعد السحب تلقائياً
+        } else {
+            alert("الكمبيوتر لا يملك حركة والسوق فارغ! الدور لك الآن يا محمد.");
+            isPlayerTurn = true;
+        }
+    }
+}
+
+// ===================================================
+// 4. منطق القفيل (الغلق) وحساب مجموع النقاط الأكثر
+// ===================================================
+function isGameLocked() {
+    if (gameBoard.length === 0) return false;
+    let leftEdge = gameBoard[0][0];
+    let rightEdge = gameBoard[gameBoard.length - 1][1];
+
+    let playerHasMove = playerHand.some(piece => piece[0] === leftEdge || piece[1] === leftEdge || piece[0] === rightEdge || piece[1] === rightEdge);
+    let computerHasMove = computerHand.some(piece => piece[0] === leftEdge || piece[1] === leftEdge || piece[0] === rightEdge || piece[1] === rightEdge);
+
+    return (!playerHasMove && !computerHasMove);
+}
+
+function handleGameLock() {
+    // حساب مجموع النقاط في يد محمد
+    let playerPoints = playerHand.reduce((sum, piece) => sum + piece[0] + piece[1], 0);
+    // حساب مجموع النقاط في يد الكمبيوتر
+    let computerPoints = computerHand.reduce((sum, piece) => sum + piece[0] + piece[1], 0);
+
+    alert(`🔒 قفيل (أُغلقت الطاولة)! \nنقاطك المتبقية: ${playerPoints} \nنقاط الخصم: ${computerPoints}`);
+
+    // شرط الفوز: صاحب النقاط الأقل هو الفائز
+    if (playerPoints < computerPoints) {
+        alert("🎉 فزت! نقاطك أقل من الخصم عند الغلق.");
+        handleDominoVictory();
+    } else {
+        alert("🚨 خسرت الجولة! أحجارك المتبقية تحمل نقاطاً أكثر.");
+        document.getElementById("domino-table").style.display = "none";
+    }
+}
+
+// ===================================================
+// 5. منصة المطالبة بالجائزة واستدعاء عقد الـ Web3
+// ===================================================
+function handleDominoVictory() {
+    document.getElementById('domino-table').innerHTML = `
+        <div style="text-align: center; color: #fff; padding: 40px; background: rgba(0,0,0,0.6); border-radius: 10px;">
+            <h2 style="color: #ca8a04;">👑 أسطورة السنديكات! فزت بالجولة 👑</h2>
+            <p>لقد تغلبت على الكمبيوتر، اضغط أدناه لتوقيع المعاملة واستلام الـ 500 $SINU:</p>
+            <button onclick="claimReward()" class="btn btn-success" style="font-size: 18px; padding: 15px 35px;">
+                💰 سحب الـ 500 $SINU الآن
+            </button>
+        </div>
+    `;
+}
+
+async function claimReward() {
+    if (!gameContract) {
+        alert("الرجاء ربط المحفظة أولاً!");
+        return;
+    }
+    try {
+        alert("يرجى تأكيد العقد من محفظتك الآن وتحمل رسوم الغاز المخفضة لشبكة Base...");
+        const tx = await gameContract.claimDominoPrize();
+        await tx.wait();
+        alert("🎯 مبروك! تم تحويل التوكن بنجاح إلى محفظتك يا محمد.");
+        location.reload(); // إعادة تدوير الصفحة لبدء تحدٍ جديد
+    } catch (error) {
+        console.error(error);
+        alert("فشلت المعاملة أو تم إلغاؤها.");
+    }
+}
+</script>
+
+</body>
+</html>
