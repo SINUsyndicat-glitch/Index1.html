@@ -274,9 +274,53 @@ async function startDominoGame() {
     renderGame();
 }
 
-// دالة العرض الرسومي وتحديث الشاشة (Render)
+// ===================================================
+// أضف هذه الدالة في أي مكان فارغ داخل الـ <script>
+// ===================================================
+function getDotsHTML(num) {
+    let html = '<div class="domino-half" style="display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; position: relative;">';
+    
+    if (num === 0) {
+        // الصفر: فارغ تماماً بدون أي شيء
+        html += ''; 
+    } 
+    else if (num === 1) {
+        // الواحد: نقطة واحدة فقط في السنتر مستحيل تتكرر
+        html += '<span class="dot" style="width: 6px; height: 6px; background-color: #000; border-radius: 50%;"></span>';
+    } 
+    else {
+        // لباقي الأرقام (2 إلى 6): توزيع مرن لضمان دقة العدد والشكل
+        html += '<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; width: 100%; height: 100%; align-items: center; justify-items: center; padding: 2px; box-sizing: border-box;">';
+        
+        const layouts = {
+            2: [1,0,0, 0,0,0, 0,0,1],
+            3: [1,0,0, 0,1,0, 0,0,1],
+            4: [1,0,1, 0,0,0, 1,0,1],
+            5: [1,0,1, 0,1,0, 1,0,1],
+            6: [1,0,1, 1,0,1, 1,0,1]
+        };
+        
+        let currentLayout = layouts[num] || [0,0,0,0,0,0,0,0,0];
+        currentLayout.forEach(hasDot => {
+            if (hasDot === 1) {
+                html += '<span class="dot" style="width: 5px; height: 5px; background-color: #000; border-radius: 50%;"></span>';
+            } else {
+                html += '<span style="width: 5px; height: 5px; display: block;"></span>';
+            }
+        });
+        
+        html += '</div>';
+    }
+    
+    html += '</div>';
+    return html;
+}
+
+// ===================================================
+// امسح دالة renderGame القديمة تماماً وضع هذه مكانها
+// ===================================================
 function renderGame() {
-    // 1. عرض قطع الطاولة (المنتصف)
+    // 1. عرض قطع الطاولة (أفقية وملتصقة تماماً)
     const boardArea = document.getElementById("board-area");
     boardArea.innerHTML = "";
     if (gameBoard.length === 0) {
@@ -284,42 +328,39 @@ function renderGame() {
     } else {
         gameBoard.forEach(piece => {
             boardArea.innerHTML += `
-                <div class="domino-piece" style="cursor: default;">
-                    <div class="domino-half">${piece[0]}</div>
-                    <div class="domino-line"></div>
-                    <div class="domino-half">${piece[1]}</div>
+                <div class="domino-piece-horizontal">
+                    ${getDotsHTML(piece[0])}
+                    <div class="domino-line-vertical"></div>
+                    ${getDotsHTML(piece[1])}
                 </div>`;
         });
     }
 
-    // 2. عرض قطع اللاعب محمد
+    // 2. عرض قطع اللاعب محمد (رأسية ومريحة للضغط من الهاتف)
     const playerArea = document.getElementById("player-pieces");
     playerArea.innerHTML = "";
     playerHand.forEach((piece, index) => {
         playerArea.innerHTML += `
-            <div class="domino-piece" onclick="handlePlayerMove(${index})">
-                <div class="domino-half">${piece[0]}</div>
-                <div class="domino-line"></div>
-                <div class="domino-half">${piece[1]}</div>
+            <div class="domino-piece-vertical" onclick="handlePlayerMove(${index})">
+                ${getDotsHTML(piece[0])}
+                <div class="domino-line-horizontal"></div>
+                ${getDotsHTML(piece[1])}
             </div>`;
     });
 
-    // 3. عرض قطع الكمبيوتر (مخفية لعدم الغش)
+    // 3. عرض قطع الكمبيوتر (مخفية)
     const computerArea = document.getElementById("computer-pieces");
     computerArea.innerHTML = "";
     computerHand.forEach(() => {
         computerArea.innerHTML += `
-            <div class="domino-piece hidden-piece">
-                <div class="domino-half">?</div>
-                <div class="domino-line"></div>
-                <div class="domino-half">?</div>
-            </div>`;
+            <div class="domino-piece-vertical hidden-piece"></div>`;
     });
 
-    // تحديث العدادات الرقمية
+    // تحديث العدادات الرقمية في الأعلى والأسفل
     document.getElementById("comp-count").innerText = computerHand.length;
     document.getElementById("boneyard-count").innerText = boneyard.length;
 }
+
 
 // معالجة حركة اللاعب عند النقر على الحجر
 function handlePlayerMove(index) {
