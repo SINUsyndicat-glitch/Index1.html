@@ -6,155 +6,131 @@
     <title>سنديكات سينو - لعبة الدومينو اللامركزية</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
-    
-        <style>
-    body {
-        background-color: #0b0f19;
-        color: #ffffff;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        text-align: center;
-        padding: 10px;
-        margin: 0;
-    }
-    .container {
-        max-width: 600px;
-        margin: 0 auto;
-    }
-    .header-box {
-        background: linear-gradient(135deg, #1e293b, #0f172a);
-        padding: 15px;
-        border-radius: 10px;
-        margin-bottom: 15px;
-        border: 1px solid #334155;
-    }
-    .btn {
-        background-color: #2563eb;
-        color: white;
-        border: none;
-        padding: 12px 24px;
-        font-size: 16px;
-        font-weight: bold;
-        border-radius: 6px;
-        cursor: pointer;
-        margin: 5px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    }
-    .btn-success { background-color: #16a34a; }
-    .btn-warning { background-color: #ca8a04; }
-    
-    #domino-table {
-        background-color: #14532d;
-        border: 8px solid #1e293b;
-        min-height: 400px;
-        padding: 15px;
-        border-radius: 15px;
-        box-shadow: inset 0 0 20px rgba(0,0,0,0.6);
-    }
-    .area-title {
-        font-size: 14px;
-        color: #cbd5e1;
-        margin: 5px 0;
-        background: rgba(0,0,0,0.3);
-        padding: 4px;
-        border-radius: 4px;
-    }
-    
-    /* تعديل ساحة الطاولة لتصبح القطع نائمة وملتصقة تماماً */
-    #board-area {
-    display: flex;
-    justify-content: flex-start; /* تبدأ الأحجار من اليمين لترتيب أسهل */
-    align-items: center;
-    gap: 0px; /* الت those أحجار ملتصقة تماماً */
-    min-height: 120px;
-    background: rgba(0,0,0,0.4);
-    border-radius: 10px;
-    padding: 15px;
-    overflow-x: auto; /* هذا يسمح للاعب بالسحب بإصبعه لرؤية باقي الأحجار */
-    white-space: nowrap; /* يمنع الأحجار من النزول لسطر جديد بشكل مشوه */
-    margin: 15px 0;
-    border: 1px dashed #22c55e;
-    -webkit-overflow-scrolling: touch; /* يجعل السحب ناعماً وسلساً على الهواتف */
-}
 
-
-    /* تصميم حجر الدومينو الأفقي (النائم وملتصق) للطاولة */
-    .domino-piece-horizontal {
-        display: inline-flex;
-        flex-direction: row; /* جعل التقسيم يمين ويسار وليس فوق وتحت */
-        width: 70px;
-        height: 35px;
-        background-color: #f8fafc;
-        border: 1.5px solid #0f172a;
-        border-radius: 4px;
-        box-shadow: 2px 2px 5px rgba(0,0,0,0.4);
-        overflow: hidden;
-    }
-    .domino-line-vertical {
-        width: 2px;
-        background-color: #0f172a;
-        height: 100%;
-    }
-
-    /* تصميم الحجر الرأسي (الواقف) لأحجار اللاعب الخاصة */
-    .domino-piece-vertical {
-        display: inline-flex;
-        flex-direction: column;
-        width: 35px;
-        height: 70px;
-        background-color: #f8fafc;
-        border: 1.5px solid #0f172a;
-        border-radius: 4px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-        cursor: pointer;
-    }
-    .domino-line-horizontal {
-        height: 2px;
-        background-color: #0f172a;
-        width: 100%;
-    }
-
-    /* توزيع النقاط الكلاسيكية داخل المربع */
-    .domino-half {
-        flex: 1;
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        grid-template-rows: repeat(3, 1fr);
-        padding: 3px;
-        box-sizing: border-box;
-        align-items: center;
-        justify-items: center;
-        width: 100%;
-        height: 100%;
-    }
-    /* تصميم النقطة السوداء */
-    .dot {
-        width: 5px;
-        height: 5px;
-        background-color: #000000;
-        border-radius: 50%;
-        display: block;
-    }
-    /* إخفاء النقطة إذا كان المكان فارغاً */
-    .empty-dot {
-        width: 5px;
-        height: 5px;
-        display: block;
-    }
-
-    .hidden-piece {
-        background-color: #334155;
-        border: 2px solid #64748b;
-    }
-    .hand-container {
-        display: flex;
-        justify-content: center;
-        gap: 8px;
-        flex-wrap: wrap;
-        min-height: 90px;
-        padding: 5px;
-    }
-
+    <style>
+        body {
+            background-color: #0b0f19;
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-align: center;
+            padding: 10px;
+            margin: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .header-box {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #334155;
+        }
+        .btn {
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn-success { background-color: #16a34a; }
+        .btn-warning { background-color: #ca8a04; }
         
+        #domino-table {
+            background-color: #14532d;
+            border: 8px solid #1e293b;
+            min-height: 400px;
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.6);
+            display: none; 
+        }
+        .area-title {
+            font-size: 14px;
+            color: #cbd5e1;
+            margin: 5px 0;
+            background: rgba(0,0,0,0.3);
+            padding: 4px;
+            border-radius: 4px;
+        }
+        
+        /* طاولة اللعب المحدثة للتمرير الأفقي السلس باللمس على الهاتف */
+        #board-area {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            gap: 0px; 
+            min-height: 120px;
+            background: rgba(0,0,0,0.4);
+            border-radius: 10px;
+            padding: 15px;
+            overflow-x: auto; 
+            white-space: nowrap; 
+            margin: 15px 0;
+            border: 1px dashed #22c55e;
+            -webkit-overflow-scrolling: touch; 
+        }
+
+        /* حجر الدومينو الأفقي (الملتصف تماماً على الطاولة) */
+        .domino-piece-horizontal {
+            display: inline-flex;
+            flex-direction: row; 
+            width: 70px;
+            height: 35px;
+            background-color: #f8fafc;
+            border: 1.5px solid #0f172a;
+            border-radius: 4px;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.4);
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .domino-line-vertical {
+            width: 2px;
+            background-color: #0f172a;
+            height: 100%;
+        }
+
+        /* حجر الدومينو الرأسي في يد اللاعب */
+        .domino-piece-vertical {
+            display: inline-flex;
+            flex-direction: column;
+            width: 35px;
+            height: 70px;
+            background-color: #f8fafc;
+            border: 1.5px solid #0f172a;
+            border-radius: 4px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .domino-line-horizontal {
+            height: 2px;
+            background-color: #0f172a;
+            width: 100%;
+        }
+
+        .domino-half {
+            box-sizing: border-box;
+        }
+        
+        .hidden-piece {
+            background-color: #334155;
+            border: 2px solid #64748b;
+        }
+        .hand-container {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            min-height: 90px;
+            padding: 5px;
+        }
     </style>
 </head>
 <body>
@@ -175,7 +151,7 @@
             <div id="computer-pieces" class="hand-container"></div>
         </div>
 
-        <div><small style="color: #4ade80;">ساحة الطاولة (الأطراف)</small></div>
+        <div><small style="color: #4ade80;">ساحة الطاولة (اسحب يميناً ويساراً لرؤية بقية الأحجار)</small></div>
         <div id="board-area">
             <div style="color: #a7f3d0; font-size: 14px;">في انتظار تنزيل الحجر الأول...</div>
         </div>
@@ -200,10 +176,8 @@ let signer;
 let gameContract;
 let userAddress = null;
 
-// ضع هنا عنوان عقد اللعبة الخاص بك على شبكة Base
-const contractAddress = "0x3E71427c4F4c3aE6DBA472Ccb17076E2148A1231"; 
+const contractAddress = "0xYourGameContractAddressHere..."; 
 
-// الـ ABI لتحديد الدوال التي سيستدعيها الكود من العقد الذكي
 const contractABI = [
     "function enterTable() public payable",  
     "function claimDominoPrize() public"
@@ -220,78 +194,30 @@ async function connectWallet() {
             gameContract = new ethers.Contract(contractAddress, contractABI, signer);
             
             alert("تم ربط المحفظة بنجاح يا محمد!");
-            document.getElementById("connectBtn").innerText = "تم الربط ✅";
+            document.getElementById("connectBtn").innerText = "تم الِربط ✅";
             document.getElementById("startBtn").style.display = "inline-block";
         } catch (error) {
             console.error(error);
             alert("فشل الاتصال بالمحفظة.");
         }
     } else {
-        alert("الرجاء فتح الموقع من داخل متصفح محفظتك (MetaMask / Coinbase) على الهاتف!");
+        alert("الرجاء فتح الموقع من داخل متصفح محفظتك على الهاتف!");
     }
 }
 
 // ===================================================
-// 2. منطق لعبة الدومينو الكلاسيكية وهندسة الأحجار
-// ===================================================
-const dominoDeck = [];
-// توليد الـ 28 حجر الفريدة (من 0-0 إلى 6-6)
-for (let i = 0; i <= 6; i++) {
-    for (let j = i; j <= 6; j++) {
-        dominoDeck.push([i, j]);
-    }
-}
-
-let playerHand = [];    
-let computerHand = [];  
-let boneyard = [];       
-let gameBoard = [];     
-let isPlayerTurn = true; // تحديد من عليه الدور
-
-// دالة بدء الجولة ودفع الرسوم الذكية
-async function startDominoGame() {
-    // تفعيل دفع الرسوم قبل بدء اللعب الحقيقي
-    /* try {
-        const tx = await gameContract.enterTable();
-        await tx.wait();
-    } catch(e) {
-        alert("يجب إتمام المعاملة لدخول الطاولة!");
-        return;
-    }
-    */
-
-    // خلط الأحجار عشوائياً وتوزيعها
-    let shuffledDeck = [...dominoDeck].sort(() => 0.5 - Math.random());
-    
-    playerHand = shuffledDeck.splice(0, 7);
-    computerHand = shuffledDeck.splice(0, 7);
-    boneyard = shuffledDeck; // الـ 14 حجر المتبقية في السوق
-    gameBoard = [];
-    isPlayerTurn = true;
-
-    // إظهار واجهة الطاولة وأزرار اللعب
-    document.getElementById("domino-table").style.display = "block";
-    document.getElementById("drawBtn").style.display = "inline-block";
-    
-    renderGame();
-}
-
-// ===================================================
-// أضف هذه الدالة في أي مكان فارغ داخل الـ <script>
+// 2. هندسة النقاط الكلاسيكية للدومينو (0 حتي 6)
 // ===================================================
 function getDotsHTML(num) {
     let html = '<div class="domino-half" style="display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; position: relative;">';
     
     if (num === 0) {
-        // الصفر: فارغ تماماً بدون أي شيء
         html += ''; 
     } 
     else if (num === 1) {
-        // الواحد: نقطة واحدة فقط في السنتر مستحيل تتكرر
         html += '<span class="dot" style="width: 6px; height: 6px; background-color: #000; border-radius: 50%;"></span>';
     } 
     else {
-        // لباقي الأرقام (2 إلى 6): توزيع مرن لضمان دقة العدد والشكل
         html += '<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; width: 100%; height: 100%; align-items: center; justify-items: center; padding: 2px; box-sizing: border-box;">';
         
         const layouts = {
@@ -319,10 +245,37 @@ function getDotsHTML(num) {
 }
 
 // ===================================================
-// امسح دالة renderGame القديمة تماماً وضع هذه مكانها
+// 3. متغيرات منطق اللعبة وتوليد الـ 28 حجر
 // ===================================================
+const dominoDeck = [];
+for (let i = 0; i <= 6; i++) {
+    for (let j = i; j <= 6; j++) {
+        dominoDeck.push([i, j]);
+    }
+}
+
+let playerHand = [];    
+let computerHand = [];  
+let boneyard = [];       
+let gameBoard = [];     
+let isPlayerTurn = true; 
+
+async function startDominoGame() {
+    let shuffledDeck = [...dominoDeck].sort(() => 0.5 - Math.random());
+    
+    playerHand = shuffledDeck.splice(0, 7);
+    computerHand = shuffledDeck.splice(0, 7);
+    boneyard = shuffledDeck; 
+    gameBoard = [];
+    isPlayerTurn = true;
+
+    document.getElementById("domino-table").style.display = "block";
+    document.getElementById("drawBtn").style.display = "inline-block";
+    
+    renderGame();
+}
+
 function renderGame() {
-    // 1. عرض قطع الطاولة (أفقية وملتصقة تماماً)
     const boardArea = document.getElementById("board-area");
     boardArea.innerHTML = "";
     if (gameBoard.length === 0) {
@@ -338,7 +291,6 @@ function renderGame() {
         });
     }
 
-    // 2. عرض قطع اللاعب محمد (رأسية ومريحة للضغط من الهاتف)
     const playerArea = document.getElementById("player-pieces");
     playerArea.innerHTML = "";
     playerHand.forEach((piece, index) => {
@@ -350,22 +302,20 @@ function renderGame() {
             </div>`;
     });
 
-    // 3. عرض قطع الكمبيوتر (مخفية)
     const computerArea = document.getElementById("computer-pieces");
     computerArea.innerHTML = "";
     computerHand.forEach(() => {
-        computerArea.innerHTML += `
-            <div class="domino-piece-vertical hidden-piece"></div>`;
+        computerArea.innerHTML += `<div class="domino-piece-vertical hidden-piece"></div>`;
     });
 
-    // تحديث العدادات الرقمية في الأعلى والأسفل
     document.getElementById("comp-count").innerText = computerHand.length;
     document.getElementById("boneyard-count").innerText = boneyard.length;
 }
 
-
-// معالجة حركة اللاعب عند النقر على الحجر
-function handlePlayerMove(index) function handlePlayerMove(index) {
+// ===================================================
+// 4. معالجة حركة اللاعب وخيار (تحديد الجهة يمين/يسار)
+// ===================================================
+function handlePlayerMove(index) {
     if (!isPlayerTurn) return;
 
     let piece = playerHand[index];
@@ -377,9 +327,7 @@ function handlePlayerMove(index) function handlePlayerMove(index) {
     
     let chosenEdge = null;
 
-    // إذا كان الحجر يطابق الجهتين معاً (يمين ويسار الطاولة)
     if (gameBoard.length > 0 && matchesLeft && matchesRight) {
-        // نطلب من اللاعب محمد الاختيار
         let choice = prompt("هذا الحجر يطابق الطرفين! \nاكتب (1) للعب على اليمين، أو اكتب (2) للعب على اليسار:");
         if (choice === "1") {
             chosenEdge = "right";
@@ -387,11 +335,10 @@ function handlePlayerMove(index) function handlePlayerMove(index) {
             chosenEdge = "left";
         } else {
             alert("إدخال غير صحيح، تم إلغاء الحركة.");
-            return; // إلغاء اللعبة حتى يختار بشكل صحيح
+            return; 
         }
     }
 
-    // تنفيذ اللعب بناءً على خيار اللاعب أو المطابقة التلقائية إذا كانت لجهة واحدة
     let success = playPieceWithChoice(piece, chosenEdge);
 
     if (success) {
@@ -412,7 +359,6 @@ function handlePlayerMove(index) function handlePlayerMove(index) {
     }
 }
 
-// دالة مساعدة جديدة لتنفيذ وضع الحجر بناء على اختيار الجهة المفضل
 function playPieceWithChoice(piece, chosenEdge) {
     if (gameBoard.length === 0) {
         gameBoard.push(piece);
@@ -424,7 +370,6 @@ function playPieceWithChoice(piece, chosenEdge) {
     let num1 = piece[0];
     let num2 = piece[1];
 
-    // إذا اختار اللاعب اليسار أو كان المطابقة يسار فقط
     if (chosenEdge === "left" || (chosenEdge === null && (num1 === leftEdge || num2 === leftEdge))) {
         if (num1 === leftEdge) {
             gameBoard.unshift([num2, num1]);
@@ -433,7 +378,6 @@ function playPieceWithChoice(piece, chosenEdge) {
         }
         return true;
     } 
-    // إذا اختار اللاعب اليمين أو كان المطابقة يمين فقط
     else if (chosenEdge === "right" || (chosenEdge === null && (num1 === rightEdge || num2 === rightEdge))) {
         if (num1 === rightEdge) {
             gameBoard.push([num1, num2]);
@@ -447,44 +391,40 @@ function playPieceWithChoice(piece, chosenEdge) {
     return false;
 }
 
-
-// دالة السحب من السوق (الـ 14 حجر) للاعب
+// ===================================================
+// 5. السحب المستمر من السوق للاعب والكمبيوتر
+// ===================================================
 function playerDraw() {
     if (!isPlayerTurn) return;
 
-    // فحص أولاً: هل يملك اللاعب فعلاً حجر يمكن لعبه؟ (لمنع السحب العشوائي إذا كان يملك حلاً)
     let hasMove = playerHand.some(piece => canPlayPiece(piece));
     if (hasMove) {
         alert("أنت تملك حجرًا قانونيًا في يدك بالفعل! لا يمكنك السحب من السوق.");
         return;
     }
 
-    // حلقة سحب مستمرة طالما أن السوق يحتوي على أحجار ولم يجد حجرًا مطابقًا بعد
     let foundPiece = false;
     let drawnCount = 0;
 
     while (boneyard.length > 0 && !foundPiece) {
-        let drawnPiece = boneyard.pop(); // سحب حجر من الـ 14 حجر
+        let drawnPiece = boneyard.pop(); 
         playerHand.push(drawnPiece);
         drawnCount++;
 
-        // فحص هل الحجر المسحوب الجديد يطابق الطاولة؟
         if (canPlayPiece(drawnPiece)) {
             foundPiece = true;
-            alert(`قمت بسحب ${drawnCount} أحجار من السوق حتى وجدت الحجر المناسب: [${drawnPiece[0]}/${drawnPiece[1]}]! يمكنك لعبه الآن.`);
+            alert(`قمت بسحب ${drawnCount} أحجار حتى وجدت الحجر المناسب: يمكنك لعبه الآن.`);
         }
     }
 
-    // إذا انتهى السوق تماماً ولم يجد الحجر المطابق، يأخذ كل الأحجار ويمر الدور
     if (!foundPiece && boneyard.length === 0) {
-        alert(`حظاً عاثراً! لقد سحبت جميع الأحجار المتبقية في السوق (${drawnCount} أحجار) ولم تجد حلاً. ينتقل الدور للكمبيوتر.`);
+        alert(`حظاً عاثراً! لقد سحبت جميع الأحجار المتبقية في السوق ولم تجد حلاً. ينتقل الدور للخصم.`);
         isPlayerTurn = false;
         setTimeout(computerTurn, 1200);
     }
 
-    renderGame(); // تحديث الشاشة فوراً لإظهار الأحجار الجديدة في يد محمد والعداد
+    renderGame(); 
 }
-
 
 function canPlayPiece(piece) {
     if (gameBoard.length === 0) return true;
@@ -493,9 +433,6 @@ function canPlayPiece(piece) {
     return (piece[0] === leftEdge || piece[1] === leftEdge || piece[0] === rightEdge || piece[1] === rightEdge);
 }
 
-//===================================================
-// النسخة المصلحة والمحدثة لدالة الكمبيوتر لإنهاء التعليق
-// ===================================================
 function computerTurn() {
     if (isGameLocked()) {
         handleGameLock();
@@ -505,15 +442,12 @@ function computerTurn() {
     let leftEdge = gameBoard[0][0];
     let rightEdge = gameBoard[gameBoard.length - 1][1];
 
-    // بحث الكمبيوتر عن حجر مطابق في يده
     let playableIndex = computerHand.findIndex(piece => 
         piece[0] === leftEdge || piece[1] === leftEdge || piece[0] === rightEdge || piece[1] === rightEdge
     );
 
     if (playableIndex !== -1) {
         let piece = computerHand[playableIndex];
-        
-        // هنا تم التحديث: الكمبيوتر يلعب تلقائياً على الجهة المناسبة له دون إظهار نافذة خيارات
         playPieceWithChoice(piece, null); 
         computerHand.splice(playableIndex, 1);
         renderGame();
@@ -528,8 +462,7 @@ function computerTurn() {
         else isPlayerTurn = true;
 
     } else {
-        // إذا لم يجد، يسحب مستمراً من السوق
-        console.log("الكمبيوتر لا يملك حركة، يبدأ السحب المستمر...");
+        console.log("الكمبيوتر يبدأ السحب المستمر...");
         let computerFound = false;
 
         while (boneyard.length > 0 && !computerFound) {
@@ -561,10 +494,8 @@ function computerTurn() {
     }
 }
 
-    
-
 // ===================================================
-// 4. منطق القفيل (الغلق) وحساب مجموع النقاط الأكثر
+// 6. نظام الغلق والقفيل وحساب الفائز بالنقاط الأقل
 // ===================================================
 function isGameLocked() {
     if (gameBoard.length === 0) return false;
@@ -578,14 +509,11 @@ function isGameLocked() {
 }
 
 function handleGameLock() {
-    // حساب مجموع النقاط في يد محمد
     let playerPoints = playerHand.reduce((sum, piece) => sum + piece[0] + piece[1], 0);
-    // حساب مجموع النقاط في يد الكمبيوتر
     let computerPoints = computerHand.reduce((sum, piece) => sum + piece[0] + piece[1], 0);
 
     alert(`🔒 قفيل (أُغلقت الطاولة)! \nنقاطك المتبقية: ${playerPoints} \nنقاط الخصم: ${computerPoints}`);
 
-    // شرط الفوز: صاحب النقاط الأقل هو الفائز
     if (playerPoints < computerPoints) {
         alert("🎉 فزت! نقاطك أقل من الخصم عند الغلق.");
         handleDominoVictory();
@@ -596,7 +524,7 @@ function handleGameLock() {
 }
 
 // ===================================================
-// 5. منصة المطالبة بالجائزة واستدعاء عقد الـ Web3
+// 7. منصة استلام الجائزة ($SINU)
 // ===================================================
 function handleDominoVictory() {
     document.getElementById('domino-table').innerHTML = `
@@ -616,11 +544,11 @@ async function claimReward() {
         return;
     }
     try {
-        alert("يرجى تأكيد العقد من محفظتك الآن وتحمل رسوم الغاز المخفضة لشبكة Base...");
+        alert("يرجى تأكيد العقد من محفظتك الآن...");
         const tx = await gameContract.claimDominoPrize();
         await tx.wait();
         alert("🎯 مبروك! تم تحويل التوكن بنجاح إلى محفظتك يا محمد.");
-        location.reload(); // إعادة تدوير الصفحة لبدء تحدٍ جديد
+        location.reload(); 
     } catch (error) {
         console.error(error);
         alert("فشلت المعاملة أو تم إلغاؤها.");
