@@ -179,9 +179,37 @@ let userAddress = null;
 const contractAddress = "0x3E71427c4F4c3aE6DBA472Ccb17076E2148A1231"; 
 
 const contractABI = [
-    "function enterTable() public payable",  
-    "function claimDominoPrize() public"
+    {"inputs":[{"internalType":"address","name":"_sinuTokenAddress","type":"address"}],"stateMutability":"nonpayable","type":"constructor"},
+    {"inputs":[{"internalType":"address","name":"owner","type":"address"}],"name":"OwnableInvalidOwner","type":"error"},
+    {"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"OwnableUnauthorizedAccount","type":"error"},
+    {"inputs":[],"name":"ReentrancyGuardReentrantCall","type":"error"},
+    {"inputs":[{"internalType":"address","name":"token","type":"address"}],"name":"SafeERC20FailedOperation","type":"error"},
+    {"anonymous":false,"inputs":[{"indexed":true,"internalType":"uint256","name":"challengeId","type":"uint256"},{"indexed":true,"internalType":"address","name":"winner","type":"address"},{"indexed":true,"internalType":"address","name":"loser","type":"address"},{"indexed":false,"internalType":"uint256","name":"prizeWon","type":"uint256"}],"name":"BattleResolved","type":"event"},
+    {"anonymous":false,"inputs":[{"indexed":true,"internalType":"uint256","name":"challengeId","type":"uint256"},{"indexed":true,"internalType":"address","name":"creator","type":"address"},{"indexed":true,"internalType":"address","name":"target","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"BountyCreated","type":"event"},
+    {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"previousOwner","type":"address"},{"indexed":true,"internalType":"address","name":"newOwner","type":"address"}],"name":"OwnershipTransferred","type":"event"},
+    {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"player","type":"address"},{"indexed":false,"internalType":"uint256","name":"burnedAmount","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"randomOutcome","type":"uint256"}],"name":"PveHitExecuted","type":"event"},
+    {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"player","type":"address"},{"indexed":false,"navy":"string","name":"itemType","type":"string"},{"indexed":false,"internalType":"uint256","name":"tokensBurned","type":"uint256"}],"name":"SurvivalUsed","type":"event"},
+    {"inputs":[],"name":"BURN_ADDRESS","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
+    {"inputs":[{"internalType":"uint256","name":"_challengeId","type":"uint256"}],"name":"acceptAndFight","outputs":[],"stateMutability":"nonpayable","type":"function"},
+    {"inputs":[{"internalType":"uint256","name":"_burnFee","type":"uint256"},{"internalType":"uint256","name":"_devFee","type":"uint256"}],"name":"adjustFees","outputs":[],"stateMutability":"nonpayable","type":"function"},
+    {"inputs":[{"internalType":"uint256","name":"_hitBurn","type":"uint256"},{"internalType":"uint256","name":"_adrenaline","type":"uint256"},{"internalType":"uint256","name":"_smoke","type":"uint256"}],"name":"adjustPveCosts","outputs":[],"stateMutability":"nonpayable","type":"function"},
+    {"inputs":[],"name":"adrenalineCost","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+    {"inputs":[],"name":"burnFeePercent","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+    {"inputs":[{"internalType":"uint256","name":"_itemType","type":"uint256"}],"name":"buySurvivalItem","outputs":[],"stateMutability":"nonpayable","type":"function"},
+    {"inputs":[],"name":"challengeCounter","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+    {"inputs":[{"internalType":"uint256","name":"","type":"uint256"}],"name":"challenges","outputs":[{"internalType":"address","name":"creator","type":"address"},{"internalType":"address","name":"target","type":"address"},{"internalType":"uint256","name":"bountyAmount","type":"uint256"},{"internalType":"bool","name":"isAccepted","type":"bool"},{"internalType":"bool","name":"isResolved","type":"bool"}],"stateMutability":"view","type":"function"},
+    {"inputs":[{"internalType":"address","name":"_target","type":"address"},{"internalType":"uint256","name":"_amount","type":"uint256"}],"name":"createBountyChallenge","outputs":[],"stateMutability":"nonpayable","type":"function"},
+    {"inputs":[],"name":"devFeePercent","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+    {"inputs":[{"internalType":"address","name":"_token","type":"address"},{"internalType":"uint256","name":"_amount","type":"uint256"}],"name":"emergencyWithdraw","outputs":[],"stateMutability":"nonpayable","type":"function"},
+    {"inputs":[],"name":"executePveAssassination","outputs":[],"stateMutability":"nonpayable","type":"function"},
+    {"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
+    {"inputs":[],"name":"pveAssassinationBurn","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+    {"inputs":[],"name":"renounceOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"},
+    {"inputs":[],"name":"sinuToken","outputs":[{"internalType":"contract IERC20","name":"","type":"address"}],"stateMutability":"view","type":"function"},
+    {"inputs":[],"name":"smokeBombCost","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+    {"inputs":[{"internalType":"address","name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"}
 ];
+
 
 async function connectWallet() {
     if (window.ethereum) {
@@ -261,19 +289,42 @@ let gameBoard = [];
 let isPlayerTurn = true; 
 
 async function startDominoGame() {
-    let shuffledDeck = [...dominoDeck].sort(() => 0.5 - Math.random());
-    
-    playerHand = shuffledDeck.splice(0, 7);
-    computerHand = shuffledDeck.splice(0, 7);
-    boneyard = shuffledDeck; 
-    gameBoard = [];
-    isPlayerTurn = true;
+    if (!gameContract || !signer) {
+        alert("الرجاء ربط المحفظة أولاً يا محمد!");
+        return;
+    }
 
-    document.getElementById("domino-table").style.display = "block";
-    document.getElementById("drawBtn").style.display = "inline-block";
-    
-    renderGame();
+    try {
+        alert("خطوة 1: يرجى الموافقة في محفظتك لاستدعاء مهمة الاغتيال ودخول الطاولة...");
+        
+        // استدعاء دالة الاغتيال ودفع التوكن والغاز من العقد الخاص بك
+        const tx = await gameContract.executePveAssassination();
+        
+        alert("جاري تأكيد المعاملة على شبكة Base... انتظر ثواني من فضلك.");
+        await tx.wait(); 
+        
+        alert("✅ تم تأكيد المعاملة ودفع الرسوم حقيقياً! بدأت الطاولة الآن.");
+
+        // بدء توزيع الأحجار بعد نجاح المعاملة على البلوكشين
+        let shuffledDeck = [...dominoDeck].sort(() => 0.5 - Math.random());
+        playerHand = shuffledDeck.splice(0, 7);
+        computerHand = shuffledDeck.splice(0, 7);
+        boneyard = shuffledDeck; 
+        gameBoard = [];
+        isPlayerTurn = true;
+
+        document.getElementById("domino-table").style.display = "block";
+        document.getElementById("drawBtn").style.display = "inline-block";
+        
+        renderGame();
+
+    } catch (error) {
+        console.error(error);
+        alert("❌ فشلت المعاملة أو رفضت التوقيع! تأكد من امتلاكك لتوكن $SINU ورصيد غاز الـ ETH على شبكة Base.");
+    }
 }
+    
+
 
 function renderGame() {
     const boardArea = document.getElementById("board-area");
