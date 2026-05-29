@@ -590,20 +590,9 @@ function handleDominoVictory() {
 }
 
 async function claimReward() {
-    if (!gameContract) {
-        alert("الرجاء ربط المحفظة أولاً!");
-        return;
-    }
-    try {
-        alert("يرجى تأكيد العقد من محفظتك الآن...");
-        const tx = await gameContract.claimDominoPrize();
-        await tx.wait();
-        alert("🎯 مبروك! تم تحويل التوكن بنجاح إلى محفظتك يا محمد.");
-        location.reload(); 
-    } catch (error) {
-        console.error(error);
-        alert("فشلت المعاملة أو تم إلغاؤها.");
-    }
+    alert("👑 مبروك الفوز الخارق يا محمد! لقد قمت بتنفيذ المهمة بنجاح وسحق الخصم. يمكنك مراجعة رصيدك والمطالبة عبر النظام الرئيسي للسنديكات.");
+    location.reload();
+}
 }
 </script>
 
